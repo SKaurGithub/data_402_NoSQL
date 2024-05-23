@@ -1,6 +1,47 @@
-## Mongodb Exercises:
+## MongoDB Exercises:
 
-First make sure you have documented the simple commands we did as a class in your markdown. Once one, move on to the exercises, make sure to use online resources to help you.
+First make sure you have documented the simple commands we did as a class in your markdown. Once done, move on to the exercises, make sure to use online resources to help you.
+
+### Simple Commands:
+- Create database:
+```
+use databaseName
+```
+
+- Create collection:
+```
+db.createCollection("collectionName")
+```
+
+- Add document to a collection:
+```
+db.collectionName.insertOne({key: value})
+```
+
+- Insert multiple documents:
+```
+db.collectionName.insertMany([{key:value, key:value},{key:value, key:value}])
+```
+
+- Return all documents from a collection:
+```
+db.collectionName.find({})
+```
+
+- Update a document:
+```
+db.collectionName.updateOne({key:value}, {$set: {key:NewValue, NewKey: Value}})
+```
+
+- Update all documents:
+```
+db.collectionName.updateMany({}, {$set: {key:NewValue}})
+```
+
+- Delete a document:
+```
+db.collectionName.deleteOne({key:value})
+```
 
 ### Exercise 1
 
@@ -70,49 +111,82 @@ Write a query that finds the Luke Skywalker document:
 ```
 db.characters.find({name: "Luke Skywalker"})
 ```
-Return the value of name and eye_colour only, from the "chewbacca" document:
 
+Return the value of name and eye_colour only, from the "chewbacca" document:
 ```
-db.characters.findOne({name: "chewbacca"}, {name: 1, eye_colour: 1, _id: 0})
+db.characters.findOne({name: "Chewbacca"}, {name: 1, eye_color: 1, _id: 0})
 ```
 
 Find a way to check the species name of admiral ackbar, this is in an embedded document ("Species"):
-
+```
+db.characters.findOne({name: "Ackbar"}, {"species.name": 1, _id:0})
+```
 
 ### Exercise 6 
 
-Write a query that gives us only the names + homeworld names of humans in the database?
+Write a query that gives us only the names + homeworld names of humans in the database:
+```
+db.characters.find({"species.name": "Human"}, {name: 1, "homeworld.name": 1, _id:0})
+```
 
 ### Exercise 7
 
-Write a query that gives us all the entries that have an eye_colour of either "yellow" or "orange"
+Write a query that gives us all the entries that have an eye_colour of either "yellow" or "orange":
+```
+db.characters.find({eye_color: {$in: ["yellow", "orange"]}})
+```
 
 ### Exercise 8
 
-You can combine filters using $and or $ or
+You can combine filters using $and or $or.
 
-Write a query that filter for characters that have both blue eyes and are female
+Write a query that filter for characters that have both blue eyes and are female:
+```
+db.characters.find({$and: [{eye_color: "blue"}, {gender: "female"}]})
+```
+
 Then write a query that filters for characters that have either blue eyes or are female
+```
+db.characters.find({$or: [{eye_color: "blue"}, {gender: "female"}]})
+```
 
 ### Exercise 9
 
-You can use comparison operators in your queries
+You can use comparison operators in your queries.
 
-Write a query that finds characters with a height over 200cm
-
+Write a query that finds characters with a height over 200cm:
+```
+db.characters.find({height: {$gt: 200}})
+```
 Note, Height has been recorded as a string and there are some missing a height value entirely. Can you find out how to convert all the height strings to ints?
+```
+db.characters.updateMany({height: "unknown"}, {$set: {height: null}})
+
+db.characters.updateMany({}, [{$set: {height: {$toInt: "$height"}}}])
+```
 
 Run your initial height query again to confirm your solution works.
+```
+db.characters.find({height: {$gt: 200}})
+```
 
 ### Exercise 10
 
 Experiment with the following operators. What does each do?
 
-$eq
-$gt
-$gte
-$in
-$lt
-$lte
-$ne
-$nin
+- $eq:
+  - matches documents where the value of a field equals the specified value.
+- $gt:
+  - selects those documents where the value of the specified field is greater than (>) the specified value.
+- $gte: 
+  - selects the documents where the value of the specified field is greater than or equal to (>=) a specified value.
+- $in:
+  - selects the documents where the value of a field equals any value in the specified array.
+- $lt:
+  - selects the documents where the value of the field is less than (<) the specified value.
+- $lte: 
+  - selects the documents where the value of the field is less than or equal to (<=) the specified value.
+- $ne: 
+  - selects the documents where the value of the field is not equal to the specified value.
+- $nin:
+  - selects the documents where the specified field value is not in the specified array or the specified field does not exist.

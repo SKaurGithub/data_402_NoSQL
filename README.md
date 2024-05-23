@@ -27,8 +27,6 @@ SQL databases are relational, while NoSQL databases are non-relational.
 ### What language(s) can be used?
 NoSQL can use a wide range of programming languages depending on which software is being used.
 
-### Example NoSQL Schema design
-
 ### NoSQL is scalable. Explain the concept and some benefits of it. Any negatives?
 NoSQL databases are horizontally scalable, which means it has the ability to chop the database into smaller parts, which can be distributed to different servers.
 
@@ -95,3 +93,4 @@ MongoDB is a general-purpose database used in various ways to support applicatio
 - Supporting agile development and collaboration
 
 ### What scenarios is it not good for?
+MongoDB should not be used if a rigid schema with strong data integrity constraints is required. In this case, a relational database would be more suitable.
