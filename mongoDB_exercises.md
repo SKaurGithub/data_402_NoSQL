@@ -67,7 +67,7 @@ db.createCollection("films")
   }
 }
 ```
-- Add documents:
+- Add documents using 'insertOne()' to only add one document or 'insertMany()' to add multiple documents:
 ```
 db.films.insertOne({title: "John Wick", release_date: "10. April 2015", main_actor: "Keanu Reeves", genre: "Action"})
 
@@ -79,15 +79,15 @@ db.films.insertMany([{title: "Titanic", release_date: "23. January 1998", main_a
 Add a new document to the collection, add a new field to that document, remove that field and then remove the document entirely.
 
 #### Answer:
-- Add document with new field:
+- Add document with new field using '$set':
 ```
 db.films.updateOne({title: "We're the Millers"}, {$set: {director: "Rawson Marshall Thurber"}})
 ```
-- Remove the new field:
+- Remove the new field using '$unset':
 ```
 db.films.updateOne({title: "We're the Millers"}, {$unset: {director: null}})
 ```
-- Remove the entire document:
+- Remove the entire document using 'deleteOne()':
 ```
 db.films.deleteOne({title: "We're the Millers"})
 ```
@@ -109,16 +109,25 @@ done
 
 Write a query that finds the Luke Skywalker document:
 ```
+# Returning a specific document using 'find()' and passing through the known key-value pair, in order to locate the specific document
+
 db.characters.find({name: "Luke Skywalker"})
 ```
 
 Return the value of name and eye_colour only, from the "chewbacca" document:
 ```
+# Locating the document with the name 'Chewbacca' and returning the 'name' and the 'eye_color'.
+# The _id gets returned automatically - in order for it not to be returned, we need to specify this by adding'_id: 0'.
+
 db.characters.findOne({name: "Chewbacca"}, {name: 1, eye_color: 1, _id: 0})
 ```
 
 Find a way to check the species name of admiral ackbar, this is in an embedded document ("Species"):
 ```
+# Locating the document with the name 'Ackbar' and returning the 'species name' only.
+# As the species name is embedded, we need to use the dot notation to access it.
+# Make sure to wrap the key around quotes when using dot notation.
+ 
 db.characters.findOne({name: "Ackbar"}, {"species.name": 1, _id:0})
 ```
 
@@ -126,6 +135,9 @@ db.characters.findOne({name: "Ackbar"}, {"species.name": 1, _id:0})
 
 Write a query that gives us only the names + homeworld names of humans in the database:
 ```
+# Locating documents which are human by using {"species.name": "Human"}
+# Returning 'name' and 'homeworld.name' only.
+
 db.characters.find({"species.name": "Human"}, {name: 1, "homeworld.name": 1, _id:0})
 ```
 
@@ -133,6 +145,9 @@ db.characters.find({"species.name": "Human"}, {name: 1, "homeworld.name": 1, _id
 
 Write a query that gives us all the entries that have an eye_colour of either "yellow" or "orange":
 ```
+# Locating documents with the eye_colour of either yellow or orange.
+# '$in' selects the documents where the eye_color equals any value in the specified array.
+
 db.characters.find({eye_color: {$in: ["yellow", "orange"]}})
 ```
 
@@ -142,11 +157,15 @@ You can combine filters using $and or $or.
 
 Write a query that filter for characters that have both blue eyes and are female:
 ```
+# '$and' operator selects the documents that satisfy all the expressions specified in the array.
+
 db.characters.find({$and: [{eye_color: "blue"}, {gender: "female"}]})
 ```
 
 Then write a query that filters for characters that have either blue eyes or are female
 ```
+# '$or' operator selects the documents that satisfy at least one of the expressions specified in the array.
+
 db.characters.find({$or: [{eye_color: "blue"}, {gender: "female"}]})
 ```
 
@@ -156,11 +175,19 @@ You can use comparison operators in your queries.
 
 Write a query that finds characters with a height over 200cm:
 ```
+# '$gt' operator selects the documents that have a height greater than 200.
+
 db.characters.find({height: {$gt: 200}})
 ```
 Note, Height has been recorded as a string and there are some missing a height value entirely. Can you find out how to convert all the height strings to ints?
 ```
+# Locating the documents with 'unknown' heights, in order to update the values to 'null' instead.
+
 db.characters.updateMany({height: "unknown"}, {$set: {height: null}})
+
+
+# Updating the data type of 'height' from str to int using '$toInt'.
+# Make sure to use a square bracket around the entire '$set' operator as otherwise MongoDB will create an embedded subdocument instead.
 
 db.characters.updateMany({}, [{$set: {height: {$toInt: "$height"}}}])
 ```
@@ -176,17 +203,41 @@ Experiment with the following operators. What does each do?
 
 - $eq:
   - matches documents where the value of a field equals the specified value.
+```
+db.collectionName.find({height: {$eq: 180}})
+```
 - $gt:
   - selects those documents where the value of the specified field is greater than (>) the specified value.
+```
+db.collectionName.find({height: {$gt: 100}})
+```
 - $gte: 
   - selects the documents where the value of the specified field is greater than or equal to (>=) a specified value.
+```
+db.collectionName.find({height: {$gte: 100}})
+```
 - $in:
   - selects the documents where the value of a field equals any value in the specified array.
+```
+db.collectionName.find({height: {$in: [100, 200]}})
+```
 - $lt:
   - selects the documents where the value of the field is less than (<) the specified value.
+```
+db.collectionName.find({height: {$lt: 100}})
+```
 - $lte: 
   - selects the documents where the value of the field is less than or equal to (<=) the specified value.
+```
+db.collectionName.find({height: {$lte: 150}})
+```
 - $ne: 
   - selects the documents where the value of the field is not equal to the specified value.
+```
+db.collectionName.find({height: {$ne: 180}})
+```
 - $nin:
   - selects the documents where the specified field value is not in the specified array or the specified field does not exist.
+```
+db.collectionName.find({height: {$nin: [180, 200]}})
+```
