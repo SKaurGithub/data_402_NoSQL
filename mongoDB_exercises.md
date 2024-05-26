@@ -241,3 +241,148 @@ db.collectionName.find({height: {$ne: 180}})
 ```
 db.collectionName.find({height: {$nin: [180, 200]}})
 ```
+
+## MongoDB Advanced Exercises
+
+### Exercise 1
+
+Research aggregation in Mongodb. How does it work?
+
+Write a query that finds the total (sum) of the height of all human characters in the db
+```
+db.characters.aggregate([
+  {$match: {"species.name": "Human"}}, 
+  {$group: {_id: null, totalHeight: {$sum: "$height"}}}
+  ])
+# totalHeight: 5476
+```
+Sum all heights and group by gender:
+```
+db.characters.aggregate([
+  {$match: {"species.name": "Human"}},
+  {$group: {_id: "$gender", total: {$sum: "$height"}}}
+  ])
+```
+
+Write a query that finds the max height per homeworld
+```
+db.characters.aggregate([
+  {$group: {_id: "$homeworld.name", maxHeight: {$max: "$height"}}}
+  ])
+```
+
+Write a query that finds the mass and count per species. Filter out null values and sort by average mass (ascending order):
+```
+db.characters.updateMany(
+  {mass: "unknown"}, 
+  {$set: {mass: null}}
+  )
+  
+db.characters.updateMany(
+  {}, 
+  [{$set: {mass: {$toInt: "$mass"}}}
+  ])
+  
+db.characters.aggregate([
+  {$match: {mass: {$ne: null}}}, 
+  {$group: {_id: "species", totalMass: {$sum: "$mass"}, 
+  count: {$sum: 1}, averageMass: {$avg: "$mass"}}},
+  {$sort: {averageMass: 1}}
+  ])
+
+```
+
+### Exercise 2
+
+Some aggregation doesn't require the .aggregate() method.
+
+Use .distinct() to find a list of all species names in the database:
+```
+db.characters.distinct("species.name")
+```
+
+Use .count() or .countDocuments() to get a count of the amount of humans in the database:
+```
+db.characters.countDocuments({"species.name": "Human"})
+```
+
+What does .estimatedDocumentCount({}) do?
+```
+# Returns the count of all documents in a collection.
+
+db.characters.estimatedDocumentCount({})
+```
+
+### Exercise 3
+
+The starwars database uses embedded documents for things like spicies and homeworld. Another option would be to use references.
+
+Find the ObjectID for Darth Vader in the collection. Copy the output to your clipboard.
+```
+db.characters.findOne(
+  {name: "Darth Vader"}, 
+  {_id: 1}
+  )
+# Output: _id: ObjectId('664efb9e65349eadb174183e')
+```
+Create a collection in starwars called "starships"
+
+Add Darth Vader's Tie-Fighter to that collection. Importantly we need to reference him being the pilot. Code is below:
+```
+db.createCollection("starships")
+
+db.starships.insertOne({
+  name: "TIE Advanced x1",
+  model: "Twin Ion Engine Advanced x1",
+  manufacturer: "Sienar Fleet Systems",
+  length: 9.2,
+  max_atmosphering_speed: 1200,
+  crew: 1,
+  passengers: 0,
+  pilot: ObjectId("664efb9e65349eadb174183e")
+  })
+```
+
+We can then use $lookup within an aggregate pipeline in order to add a field corresponding to the joined data:
+```
+db.starships.aggregate([
+  { $lookup: {
+    from: "characters",
+    localField: "pilot",
+    foreignField: "_id",
+    as: "matched_pilot"
+  } }
+])
+```
+Now, add the Millenium Falcon to the starships collection. Look up the data or make it up. The pilot must take an array with multiple ObjectIDs though.
+```
+db.starships.insertOne({
+    name: "Millennium Falcon",
+    model: "YT-1300 light freighter",
+    manufacturer: "Corellian Engineering Corporation",
+    length: 34.37,
+    max_atmosphering_speed: 1050,
+    crew: 4,
+    passengers: 6,
+    pilot:[
+        ObjectId("664efb9b4a637d9a738c5a44"),
+        ObjectId("664efba83763d83d4d944e3a"),
+        ObjectId("664efbb08d1e891c400a5000"),
+        ObjectId("664efbb65e30be68b0773839")
+    ]})
+```
+
+We could then use the same lookup as before - it works with ObjectIds in arrays too. But we'll get a huge amount of information back. To restrict it to certain fields, we could add a $project step to the pipeline, which projects certain data to the next step:
+```
+db.starships.aggregate([
+  { $lookup: {
+    from: "characters",
+    localField: "pilot",
+    foreignField: "_id",
+    as: "matched_pilot"
+  } },
+  { $project: {name: 1, model: 1, "matched_pilot.name": 1}}
+])
+```
+
+When first inserting documents that might have references, you can generate a new ObjectId and assign it to a variable var id = ObjectId(). That variable can then be set as the _id of the primary document and as the reference for the referencing document.
